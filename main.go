@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -133,16 +134,49 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	// Implement logout logic
 }
 
-func GetBooks(w http.ResponseWriter, r *http.Request) {
-	// Implement logic to get all books
+// GetBooks returns all books in the BookList
+func GetBooks(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(BookList)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
-func BookGeneralized(w http.ResponseWriter, r *http.Request) {
-	// Implement logic to get generalized book information
+// BookGeneralized returns a list of all book names separated by newlines
+func BookGeneralized(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+
+	var bookNames []string
+	for _, book := range BookList {
+		bookNames = append(bookNames, book.Name)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(strings.Join(bookNames, "\n")))
 }
 
+// GetSingleBook returns a single book by ISBN
 func GetSingleBook(w http.ResponseWriter, r *http.Request) {
-	// Implement logic to get a single book by ISBN
+	ISBN := chi.URLParam(r, "ISBN")
+	book, exists := BookList[ISBN]
+
+	if !exists {
+		http.Error(w, "Book not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(book)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func NewBook(w http.ResponseWriter, r *http.Request) {
@@ -185,7 +219,7 @@ func SetupRouter() chi.Router {
 		r.Route("/books", func(r chi.Router) {
 			r.Get("/", GetBooks)
 			r.Get("/general", BookGeneralized)
-			r.Get("/get/{ISBN}", GetSingleBook)
+			r.Get("/{ISBN}", GetSingleBook)
 
 			// Group routes that require authentication
 			r.Group(func(r chi.Router) {
