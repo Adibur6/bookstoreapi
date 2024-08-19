@@ -179,8 +179,65 @@ func GetSingleBook(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// NewBook adds a new book to the BookList and updates the AuthorList accordingly
 func NewBook(w http.ResponseWriter, r *http.Request) {
-	// Implement logic to create a new book
+	// Decode the incoming book data
+	var newBook Book
+	err := json.NewDecoder(r.Body).Decode(&newBook)
+	if err != nil {
+		http.Error(w, "Invalid input data", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the book data
+	if newBook.ISBN == "" {
+		http.Error(w, "ISBN cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if newBook.Name == "" {
+		http.Error(w, "Book name cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	if len(newBook.Authors) == 0 {
+		http.Error(w, "There should be at least one author", http.StatusBadRequest)
+		return
+	}
+
+	for _, author := range newBook.Authors {
+		if author.Name == "" {
+			http.Error(w, "Author name cannot be empty", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Add the new book to BookList
+	BookList[newBook.ISBN] = newBook
+
+	// Update the AuthorList
+	for _, author := range newBook.Authors {
+		normalizedAuthorName := SmStr(author.Name)
+		authorBooks, exists := AuthorList[normalizedAuthorName]
+
+		if exists {
+			// If the author already exists, just add the new book's ISBN to their list
+			authorBooks.Books = append(authorBooks.Books, newBook.ISBN)
+		} else {
+			// If the author does not exist, create a new entry in AuthorList
+			authorBooks = AuthorBooks{
+				Author: author,
+				Books:  []string{newBook.ISBN},
+			}
+		}
+
+		// Update the AuthorList with the new or modified author data
+		AuthorList[normalizedAuthorName] = authorBooks
+	}
+
+	// Respond with the status of the operation
+	w.WriteHeader(http.StatusCreated)
+	w.Write([]byte("New book added successfully"))
 }
 
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
@@ -191,12 +248,37 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	// Implement logic to update a book by ISBN
 }
 
-func GetAuthors(w http.ResponseWriter, r *http.Request) {
-	// Implement logic to get all authors
+// GetAuthors returns all authors and their associated books
+func GetAuthors(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(AuthorList)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
+// GetSingleAuthor returns a single author by name along with their associated books
 func GetSingleAuthor(w http.ResponseWriter, r *http.Request) {
-	// Implement logic to get a single author by name
+	authorName := chi.URLParam(r, "AuthorName")
+	normalizedAuthorName := SmStr(authorName)
+	authorBooks, exists := AuthorList[normalizedAuthorName]
+
+	if !exists {
+		http.Error(w, "Author not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(authorBooks)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 // SetupRouter initializes the router with all routes and middleware
