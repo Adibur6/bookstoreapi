@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"log"
+	"net/http"
 	"strings"
 )
 
@@ -117,9 +121,100 @@ func IntializeDB() {
 
 	return
 }
+
+// Function signatures
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	// Implement login logic
+	w.Write([]byte("Hello World"))
+}
+
+func Logout(w http.ResponseWriter, r *http.Request) {
+	// Implement logout logic
+}
+
+func GetBooks(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to get all books
+}
+
+func BookGeneralized(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to get generalized book information
+}
+
+func GetSingleBook(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to get a single book by ISBN
+}
+
+func NewBook(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to create a new book
+}
+
+func DeleteBook(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to delete a book by ISBN
+}
+
+func UpdateBook(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to update a book by ISBN
+}
+
+func GetAuthors(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to get all authors
+}
+
+func GetSingleAuthor(w http.ResponseWriter, r *http.Request) {
+	// Implement logic to get a single author by name
+}
+
+// SetupRouter initializes the router with all routes and middleware
+func SetupRouter() chi.Router {
+	// Create a new router
+	r := chi.NewRouter()
+
+	// Add middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.URLFormat)
+
+	// Define the routes
+	r.Post("/login", Login)
+	r.Post("/logout", Logout)
+
+	// Group routes for books and authors
+	r.Group(func(r chi.Router) {
+		r.Route("/books", func(r chi.Router) {
+			r.Get("/", GetBooks)
+			r.Get("/general", BookGeneralized)
+			r.Get("/get/{ISBN}", GetSingleBook)
+
+			// Group routes that require authentication
+			r.Group(func(r chi.Router) {
+
+				r.Post("/", NewBook)
+				r.Delete("/{ISBN}", DeleteBook)
+				r.Put("/{ISBN}", UpdateBook)
+			})
+		})
+
+		r.Route("/authors", func(r chi.Router) {
+			r.Get("/", GetAuthors)
+			r.Get("/{AuthorName}", GetSingleAuthor)
+		})
+	})
+
+	return r
+}
+
 func main() {
 	IntializeDB()
 	fmt.Println(AuthorList)
 	fmt.Println(BookList)
 	fmt.Println(CredList)
+	// Setup the router
+	r := SetupRouter()
+
+	// Start the HTTP server
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		log.Fatalln(err)
+	}
 }
