@@ -31,8 +31,8 @@ var startCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(startCmd)
 
-	startCmd.Flags().IntVarP(&Cfg.PortNumber, "port", "p", 8080, "Specify port to run the server on")
-	startCmd.Flags().BoolVarP(&detached, "detached", "d", false, "Run server in detached mode")
+	startCmd.Flags().IntVarP(&Cfg.PortNumber, "port", "p", Cfg.PortNumber, "Specify port to run the server on")
+	startCmd.Flags().BoolVarP(&detached, "detached", "d", Cfg.ServerRunning, "Run server in detached mode")
 }
 
 func startServer() {
