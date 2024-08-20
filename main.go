@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/adibur6/bookstoreapi/apihandler"
+	"github.com/adibur6/bookstoreapi/cmd"
 )
 
 func main() {
-	apihandler.Start(8080)
+	cmd.Execute()
 }
