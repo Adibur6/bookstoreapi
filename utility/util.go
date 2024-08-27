@@ -11,6 +11,9 @@ func IsPortAvailable(port int) bool {
 	if err != nil {
 		return false // Port is busy
 	}
-	ln.Close()  // Close the listener to release the port
+	err = ln.Close()
+	if err != nil {
+		return false
+	} // Close the listener to release the port
 	return true // Port is available
 }

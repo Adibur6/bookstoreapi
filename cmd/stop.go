@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/adibur6/bookstoreapi/config"
-	"github.com/adibur6/bookstoreapi/utility"
+	"strings"
+
 	"github.com/spf13/cobra"
-	"log"
 	"os/exec"
 )
 
@@ -13,7 +12,7 @@ var stopCmd = &cobra.Command{
 	Use:   "stop",
 	Short: "Stop the running book API server",
 	Run: func(cmd *cobra.Command, args []string) {
-		Cfg = *config.LoadConfig(config.Configfile)
+
 		stopServer()
 
 	},
@@ -25,19 +24,31 @@ func init() {
 }
 
 func stopServer() {
-	if utility.IsPortAvailable(Cfg.PortNumber) {
-		fmt.Println(Cfg.PortNumber)
-		fmt.Println("No server is currently running.")
+
+	fmt.Println("Stopping server.")
+	cmd := exec.Command("bash", "-c", "ps aux | grep './bookapi' | grep -v 'grep' | awk '{print $2}' | head -n 1")
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Printf("Error getting the process ID: %v\n", err)
 		return
 	}
 
-	fmt.Printf("Stopping server on port %d...\n", Cfg.PortNumber)
-
-	// Find and kill the process using the port number
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("kill -9 $(lsof -t -i :%d)", Cfg.PortNumber))
-	err := cmd.Run()
-	if err != nil {
-		log.Fatal("Failed to stop server:", err)
+	// Convert output to string and trim any whitespace/newlines
+	pid := strings.TrimSpace(string(output))
+	if pid == "" {
+		fmt.Println("No process found.")
+		return
 	}
 
+	// Print the process ID
+	fmt.Printf("Process ID: %s\n", pid)
+
+	// Step 2: Kill the process
+	killCmd := exec.Command("kill", pid)
+	err = killCmd.Run()
+	if err != nil {
+		fmt.Printf("Error killing the process: %v\n", err)
+	} else {
+		fmt.Println("Process killed successfully.")
+	}
 }

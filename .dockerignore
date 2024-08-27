@@ -1,0 +1,12 @@
+# Ignore the Dockerfile itself
+Dockerfile
+
+# Ignore the .dockerignore file
+.dockerignore
+
+# Ignore any .git folder and files (version control)
+.git
+.gitignore
+.idea
+
+bookapi

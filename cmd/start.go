@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/adibur6/bookstoreapi/apihandler"
-	"github.com/adibur6/bookstoreapi/config"
 	"github.com/adibur6/bookstoreapi/utility"
 	"github.com/spf13/cobra"
 	"log"
@@ -12,13 +11,14 @@ import (
 	"strconv"
 )
 
+var port int = 8080
 var detached bool
 
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the book API server",
 	Run: func(cmd *cobra.Command, args []string) {
-		config.SaveConfig(&Cfg, config.Configfile)
+		fmt.Println("starting server at ", port)
 		if detached {
 			startDetached()
 		} else {
@@ -31,30 +31,28 @@ var startCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(startCmd)
 
-	startCmd.Flags().IntVarP(&Cfg.PortNumber, "port", "p", Cfg.PortNumber, "Specify port to run the server on")
-	startCmd.Flags().BoolVarP(&detached, "detached", "d", Cfg.ServerRunning, "Run server in detached mode")
+	startCmd.Flags().IntVarP(&port, "port", "p", 8080, "Specify port to run the server on")
+	startCmd.Flags().BoolVarP(&detached, "detached", "d", false, "Run server in detached mode")
 }
 
 func startServer() {
-	if !utility.IsPortAvailable(Cfg.PortNumber) {
-		fmt.Printf("Server is already running on port %d.\n", Cfg.PortNumber)
+	if !utility.IsPortAvailable(port) {
+		fmt.Printf("Server is already running on port %d.\n", port)
 		return
 	}
 
-	config.SaveConfig(&Cfg, config.Configfile)
-
-	apihandler.Start(Cfg.PortNumber)
+	apihandler.Start(port)
 
 }
 
 func startDetached() {
-	if !utility.IsPortAvailable(Cfg.PortNumber) {
-		fmt.Printf("Server is already running on port %d.\n", Cfg.PortNumber)
+	if !utility.IsPortAvailable(port) {
+		fmt.Printf("Server is already running on port %d.\n", port)
 		return
 	}
 
 	// Create the command to start the server in detached mode
-	cmd := exec.Command(os.Args[0], "start", "-p", strconv.Itoa(Cfg.PortNumber))
+	cmd := exec.Command(os.Args[0], "start", "-p", strconv.Itoa(port))
 
 	// Redirect stdout and stderr to avoid cluttering the terminal
 	cmd.Stdout = os.Stdout
@@ -66,7 +64,7 @@ func startDetached() {
 		log.Fatal("Failed to start server in detached mode:", err)
 	}
 
-	fmt.Printf("Server started in detached mode on port %d with PID %d\n", Cfg.PortNumber, cmd.Process.Pid)
+	fmt.Printf("Server started in detached mode on port %d with PID %d\n", port, cmd.Process.Pid)
 
 	// Optionally, you can detach the process if needed
 	err = cmd.Process.Release()
