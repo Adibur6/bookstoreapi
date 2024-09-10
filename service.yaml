@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookapi-service
+  labels:
+    app: bookapi
+spec:
+  type: NodePort # Exposing the service to be accessible from your machine
+  selector:
+    app: bookapi
+  ports:
+    - protocol: TCP
+      port: 80        # The port that the service will expose (for browser access)
+      targetPort: 8081 # The port that the container listens on (inside the Pod)
+      nodePort: 30009  # A port from the NodePort range (30000-32767)

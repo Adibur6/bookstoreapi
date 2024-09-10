@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookapi-deployment
+  labels:
+    app: bookapi
+spec:
+  replicas: 5 # You can scale this by increasing the number of replicas
+  selector:
+    matchLabels:
+      app: bookapi
+  template:
+    metadata:
+      labels:
+        app: bookapi
+    spec:
+      containers:
+      - name: bookapi-container
+        image: adibur6/bookapi:v1
+        ports:
+        - containerPort: 8081
